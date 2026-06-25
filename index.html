@@ -1,112 +1,448 @@
-<div class="fee-table-container">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KES Updates - Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-.fee-table-container{
-background:linear-gradient(135deg,#0f172a,#1e293b);
-padding:22px;
-border-radius:20px;
-margin-bottom:22px;
-box-shadow:0 12px 35px rgba(0,0,0,0.35);
-overflow-x:auto;
-}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f8fafc;color:#0f172a;min-height:100vh}
 
-.fee-table-container h2{
-margin-bottom:14px;
-font-size:24px;
-color:#ffffff;
-text-align:center;
-}
+/* Login Screen */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:linear-gradient(135deg,#059669 0%,#2563eb 100%)}
+.login-box{background:#fff;border-radius:24px;padding:40px 32px;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.15);animation:slideUp .6s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.login-box h1{text-align:center;font-size:26px;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,#059669,#2563eb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.login-box p{text-align:center;color:#64748b;font-size:13px;margin-bottom:28px}
+.login-box .inp-wrap{position:relative;margin-bottom:16px}
+.login-box .inp{width:100%;padding:14px 48px 14px 16px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;font-family:inherit;transition:.2s}
+.login-box .inp:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.08)}
+.login-box .toggle-pass{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;padding:4px;display:flex;align-items:center;justify-content:center}
+.login-box .toggle-pass:hover{color:#2563eb}
+.login-box .toggle-pass svg{width:20px;height:20px}
+.login-box .btn{width:100%;padding:15px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;box-shadow:0 4px 14px rgba(37,99,235,.3)}
+.login-box .btn:hover{box-shadow:0 6px 20px rgba(37,99,235,.4);transform:translateY(-1px)}
+.login-box .btn:active{transform:translateY(0)}
+.login-box .err{background:#fef2f2;color:#dc2626;padding:12px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;text-align:center;font-weight:600;border:1px solid #fecaca}
 
-.fee-table-container table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
-}
+/* Dashboard */
+.dashboard{display:none}
+.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.topbar h1{font-size:20px;font-weight:800;background:linear-gradient(135deg,#059669,#2563eb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.topbar .user{display:flex;align-items:center;gap:12px}
+.topbar .user span{font-size:13px;color:#64748b;font-weight:600}
+.topbar .logout{padding:8px 16px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+.topbar .logout:hover{background:#fee2e2;transform:translateY(-1px)}
 
-.fee-table-container th,
-.fee-table-container td{
-border:1px solid rgba(255,255,255,0.15);
-padding:10px;
-font-size:14px;
-}
+.container{padding:24px;max-width:1400px;margin:0 auto}
 
-.fee-table-container th{
-background:linear-gradient(135deg,#2563eb,#7c3aed);
-color:#ffffff;
-text-align:center;
-font-weight:600;
-}
+/* Stats Grid */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.04);border:1px solid #e2e8f0;transition:.2s}
+.stat:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.stat .label{font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat .val{font-size:28px;font-weight:800;color:#0f172a}
+.stat .sub{font-size:11px;color:#64748b;margin-top:4px}
+.stat.green .val{color:#059669}
+.stat.blue .val{color:#2563eb}
+.stat.orange .val{color:#ea580c}
+.stat.purple .val{color:#7c3aed}
 
-.fee-table-container td{
-background:#ffffff;
-color:#0f172a;
-}
+/* Filters */
+.filters{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.04);border:1px solid #e2e8f0}
+.filters h3{font-size:14px;font-weight:700;margin-bottom:12px}
+.filter-row{display:flex;gap:10px;flex-wrap:wrap}
+.filter-row select,.filter-row input{padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:inherit;background:#fff;transition:.2s}
+.filter-row select:focus,.filter-row input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.filter-row button{padding:10px 20px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;box-shadow:0 2px 8px rgba(37,99,235,.2)}
+.filter-row button:hover{box-shadow:0 4px 12px rgba(37,99,235,.3);transform:translateY(-1px)}
 
-.fee-table-container tbody tr:nth-child(even) td{
-background:#f8fafc;
-}
+/* Table */
+.table-wrap{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);border:1px solid #e2e8f0}
+.table-head{padding:20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.table-head h3{font-size:16px;font-weight:700}
+.table-head .count{font-size:12px;color:#64748b;font-weight:600;background:#f1f5f9;padding:4px 12px;border-radius:20px}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+thead{background:#f8fafc}
+th{padding:14px 16px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0}
+td{padding:14px 16px;font-size:13px;border-bottom:1px solid #f1f5f9}
+tr:hover{background:#f8fafc}
+.status{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.status.pending{background:#fef3c7;color:#92400e}
+.status.verified{background:#d1fae5;color:#065f46}
+.status.rejected{background:#fee2e2;color:#991b1b}
+.status.qr{background:#dbeafe;color:#1e40af}
+.actions{display:flex;gap:6px}
+.actions button{padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+.actions button:hover{background:#f8fafc;transform:translateY(-1px)}
+.actions .verify{color:#059669;border-color:#a7f3d0}
+.actions .verify:hover{background:#ecfdf5}
+.actions .reject{color:#dc2626;border-color:#fecaca}
+.actions .reject:hover{background:#fef2f2}
+.actions .view{color:#2563eb;border-color:#bfdbfe}
+.actions .view:hover{background:#eff6ff}
+.actions .del{color:#64748b}
+.actions .del:hover{background:#fef2f2;color:#dc2626}
 
-.fee-table-container tbody tr:hover td{
-background:#e0e7ff;
-transition:0.3s;
-}
+.empty{text-align:center;padding:60px 20px;color:#64748b}
+.empty .icon{font-size:48px;margin-bottom:12px;opacity:.5}
 
-@media(max-width:768px){
-.fee-table-container th,
-.fee-table-container td{
-font-size:10px;
-padding:6px;
-}
-}
+/* Modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal.active{display:flex}
+.modal-box{background:#fff;border-radius:20px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:modalIn .3s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-head{padding:20px 24px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center}
+.modal-head h3{font-size:18px;font-weight:700}
+.modal-head .close{width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;cursor:pointer;font-size:18px;transition:.2s}
+.modal-head .close:hover{background:#e2e8f0;transform:rotate(90deg)}
+.modal-body{padding:24px}
+.modal-body img{width:100%;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.modal-body .info{background:#f8fafc;border-radius:12px;padding:16px}
+.modal-body .info .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px}
+.modal-body .info .row:last-child{border-bottom:none}
+.modal-body .info .row .l{color:#64748b;font-weight:500}
+.modal-body .info .row .v{font-weight:700}
+.modal-foot{padding:16px 24px;border-top:1px solid #e2e8f0;display:flex;gap:10px;justify-content:flex-end}
+.modal-foot button{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:.2s}
+.modal-foot button:hover{transform:translateY(-1px)}
+.modal-foot .verify{background:#059669;color:#fff;box-shadow:0 2px 8px rgba(5,150,105,.3)}
+.modal-foot .verify:hover{box-shadow:0 4px 12px rgba(5,150,105,.4)}
+.modal-foot .reject{background:#dc2626;color:#fff;box-shadow:0 2px 8px rgba(220,38,38,.3)}
+.modal-foot .reject:hover{box-shadow:0 4px 12px rgba(220,38,38,.4)}
+.modal-foot .close{background:#f1f5f9;color:#0f172a}
+.modal-foot .close:hover{background:#e2e8f0}
 
-@media(max-width:480px){
-.fee-table-container th,
-.fee-table-container td{
-font-size:9px;
-padding:5px;
-}
+@media(max-width:640px){
+.container{padding:16px}
+.topbar{padding:12px 16px;flex-wrap:wrap;gap:10px}
+.topbar h1{font-size:18px}
+.stat .val{font-size:22px}
+.filter-row{flex-direction:column}
+.filter-row select,.filter-row input,.filter-row button{width:100%}
+.login-box{padding:32px 24px}
 }
 </style>
+</head>
+<body>
 
-<h2>Degree College Fees</h2>
+<!-- Login Screen -->
+<div class="login-screen" id="loginScreen">
+<div class="login-box">
+<h1>KES Updates</h1>
+<p>Admin Dashboard Login</p>
+<div class="err" id="loginErr">Invalid password</div>
+<div class="inp-wrap">
+<input type="password" id="loginPass" class="inp" placeholder="Enter admin password">
+<button class="toggle-pass" onclick="togglePass()" id="toggleBtn">
+<svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+<circle cx="12" cy="12" r="3"></circle>
+</svg>
+</button>
+</div>
+<button class="btn" onclick="login()">Login</button>
+</div>
+</div>
 
+<!-- Dashboard -->
+<div class="dashboard" id="dashboard">
+<div class="topbar">
+<h1>KES Updates - Admin</h1>
+<div class="user">
+<span>Admin</span>
+<button class="logout" onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div class="container">
+<!-- Stats -->
+<div class="stats">
+<div class="stat blue">
+<div class="label">Total Donations</div>
+<div class="val" id="s-total">0</div>
+<div class="sub">All time</div>
+</div>
+<div class="stat green">
+<div class="label">Total Amount</div>
+<div class="val" id="s-amount">Rs 0</div>
+<div class="sub">Raised</div>
+</div>
+<div class="stat orange">
+<div class="label">Pending</div>
+<div class="val" id="s-pending">0</div>
+<div class="sub">Needs verification</div>
+</div>
+<div class="stat purple">
+<div class="label">Verified</div>
+<div class="val" id="s-verified">0</div>
+<div class="sub">Confirmed</div>
+</div>
+<div class="stat">
+<div class="label">Today</div>
+<div class="val" id="s-today">0</div>
+<div class="sub">New donations</div>
+</div>
+<div class="stat green">
+<div class="label">Trees Planted</div>
+<div class="val" id="s-trees">0</div>
+<div class="sub">Total impact</div>
+</div>
+</div>
+
+<!-- Filters -->
+<div class="filters">
+<h3>Filter Donations</h3>
+<div class="filter-row">
+<select id="f-status">
+<option value="">All Status</option>
+<option value="pending">Pending</option>
+<option value="verified">Verified</option>
+<option value="rejected">Rejected</option>
+<option value="qr_generated">QR Generated</option>
+</select>
+<input type="text" id="f-search" placeholder="Search name or email...">
+<button onclick="loadData()">Apply Filter</button>
+</div>
+</div>
+
+<!-- Table -->
+<div class="table-wrap">
+<div class="table-head">
+<h3>All Donations</h3>
+<div class="count" id="t-count">0 records</div>
+</div>
+<div class="table-scroll">
 <table>
 <thead>
 <tr>
-<th>Sr. No.</th>
-<th>Programmes</th>
-<th>First Year Fees ₹</th>
-<th>1st Installment</th>
-<th>2nd Installment</th>
-<th>Scholarship/No Installment</th>
+<th>ID</th>
+<th>Name</th>
+<th>Email</th>
+<th>Amount</th>
+<th>Trees</th>
+<th>Date</th>
+<th>Status</th>
+<th>Actions</th>
 </tr>
 </thead>
-<tbody>
-<tr><td>1</td><td>B.Com (Aided)</td><td>19140</td><td>NO INSTALLMENT</td><td>—</td><td>17140</td></tr>
-<tr><td>2</td><td>B.Com (Banking & Insurance)</td><td>47010</td><td>NO INSTALLMENT</td><td>—</td><td>24380</td></tr>
-<tr><td>3</td><td>B.Com (Investment Management)</td><td>48360</td><td>NO INSTALLMENT</td><td>—</td><td>NA</td></tr>
-<tr><td>4</td><td>B.Com (Logistic Supply Chain Management)</td><td>47365</td><td>NO INSTALLMENT</td><td>—</td><td>NA</td></tr>
-<tr><td>5</td><td>B.Com (Accounting & Finance)</td><td>48710</td><td>NO INSTALLMENT</td><td>—</td><td>27110</td></tr>
-<tr><td>6</td><td>B.Com (Financial Markets)</td><td>48610</td><td>NO INSTALLMENT</td><td>—</td><td>26460</td></tr>
-<tr><td>7</td><td>Bachelor of Arts (Multimedia & Mass)</td><td>48510</td><td>NO INSTALLMENT</td><td>—</td><td>25680</td></tr>
-<tr><td>8</td><td>B.A. with Geography</td><td>38640</td><td>NO INSTALLMENT</td><td>—</td><td>25440</td></tr>
-<tr><td>9</td><td>B.A. with Psychology</td><td>45640</td><td>NO INSTALLMENT</td><td>—</td><td>32440</td></tr>
-<tr><td>10</td><td>B.A. with English Lit</td><td>41640</td><td>NO INSTALLMENT</td><td>—</td><td>26440</td></tr>
-<tr><td>11</td><td>B.A. with Economics</td><td>39640</td><td>NO INSTALLMENT</td><td>—</td><td>26440</td></tr>
-<tr><td>12</td><td>B.Sc (Finance & Technology)</td><td>55380</td><td>NO INSTALLMENT</td><td>—</td><td>NA</td></tr>
-<tr><td>13</td><td>B.Com (Retail Management)</td><td>42130</td><td>NO INSTALLMENT</td><td>—</td><td>NA</td></tr>
-<tr><td>14</td><td>B.A. (Film, TV & New Media)</td><td>72210</td><td>42000</td><td>30210</td><td>NA</td></tr>
-<tr><td>15</td><td>B.Sc (Artificial Intelligence)</td><td>85510</td><td>55000</td><td>30510</td><td>NA</td></tr>
-<tr><td>16</td><td>B.Sc (Data Science)</td><td>75510</td><td>42000</td><td>33510</td><td>NA</td></tr>
-<tr><td>17</td><td>B.Sc (Information Technology)</td><td>53510</td><td>NO INSTALLMENT</td><td>—</td><td>33280</td></tr>
-<tr><td>18</td><td>B.Com (Certified Management Accounting)</td><td>93400</td><td>40000</td><td>13400</td><td>NA</td></tr>
-<tr><td>19</td><td>B.Com (Digital Business)</td><td>183480</td><td>43000</td><td>51080</td><td>58380</td></tr>
-<tr><td>20</td><td>B.Sc (International Finance)</td><td>153380</td><td>43000</td><td>30500</td><td>33800</td></tr>
-<tr><td>21</td><td>B.Sc Cyber Security & Digital Forensics</td><td>103040</td><td>42000</td><td>31300</td><td>29740</td></tr>
-<tr><td>22</td><td>B.Com (International Accounting)</td><td>139180</td><td>50000</td><td>45000</td><td>44180</td></tr>
-<tr><td>23</td><td>B.Sc (Capital Market)</td><td>103600</td><td>50000</td><td>40000</td><td>23600</td></tr>
-<tr><td>24</td><td>BMS - AICTE</td><td>49230</td><td>NO INSTALLMENT</td><td>—</td><td>27730</td></tr>
-<tr><td>25</td><td>BBA - AICTE</td><td>75270</td><td>43000</td><td>32230</td><td>31730</td></tr>
-<tr><td>26</td><td>BCA - AICTE</td><td>72730</td><td>43000</td><td>29730</td><td>31730</td></tr>
-</tbody>
+<tbody id="t-body"></tbody>
 </table>
 </div>
+<div class="empty" id="empty" style="display:none">
+<div class="icon">📭</div>
+<p>No donations found</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+<div class="modal-box">
+<div class="modal-head">
+<h3>Donation Details</h3>
+<button class="close" onclick="closeModal()">×</button>
+</div>
+<div class="modal-body" id="modalBody"></div>
+<div class="modal-foot" id="modalFoot"></div>
+</div>
+</div>
+
+<script>
+const U='https://uegdizdnminwhkxcdcle.supabase.co';
+const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlZ2RpemRubWlud2hreGNkY2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwODk2MjgsImV4cCI6MjA5NzY2NTYyOH0.2wiAHbaoNoDva_tRseDAywVMu_6AioCGlVLgoVb0d6s';
+const sb=window.supabase.createClient(U,K);
+
+const ADMIN_PASS='8291692332';
+let allData=[];
+let passVisible=false;
+
+// Toggle password visibility
+function togglePass(){
+passVisible=!passVisible;
+const inp=document.getElementById('loginPass');
+const icon=document.getElementById('eyeIcon');
+if(passVisible){
+inp.type='text';
+icon.innerHTML='<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+}else{
+inp.type='password';
+icon.innerHTML='<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+}
+}
+
+// Login
+function login(){
+const p=document.getElementById('loginPass').value;
+if(p===ADMIN_PASS){
+sessionStorage.setItem('kes_admin','1');
+showDashboard();
+}else{
+document.getElementById('loginErr').style.display='block';
+setTimeout(()=>document.getElementById('loginErr').style.display='none',2000);
+}
+}
+
+function logout(){
+sessionStorage.removeItem('kes_admin');
+location.reload();
+}
+
+function showDashboard(){
+document.getElementById('loginScreen').style.display='none';
+document.getElementById('dashboard').style.display='block';
+loadData();
+}
+
+// Check session
+if(sessionStorage.getItem('kes_admin')==='1')showDashboard();
+
+// Enter key login
+document.getElementById('loginPass').addEventListener('keypress',e=>{if(e.key==='Enter')login()});
+
+// Load data
+async function loadData(){
+const status=document.getElementById('f-status').value;
+const search=document.getElementById('f-search').value.toLowerCase();
+
+let query=sb.from('donations').select('*').order('created_at',{ascending:false});
+if(status)query=query.eq('status',status);
+
+const{data,error}=await query;
+if(error){console.error(error);return}
+
+allData=data.filter(d=>{
+if(!search)return true;
+return(d.name||'').toLowerCase().includes(search)||(d.email||'').toLowerCase().includes(search);
+});
+
+renderStats();
+renderTable();
+}
+
+function renderStats(){
+const total=allData.length;
+const amount=allData.reduce((s,d)=>s+(d.amount||0),0);
+const pending=allData.filter(d=>d.status==='pending').length;
+const verified=allData.filter(d=>d.status==='verified').length;
+const today=allData.filter(d=>{
+const dd=new Date(d.created_at);
+const now=new Date();
+return dd.toDateString()===now.toDateString();
+}).length;
+const trees=allData.reduce((s,d)=>s+Math.max(1,Math.floor((d.amount||0)/10)),0);
+
+document.getElementById('s-total').textContent=total;
+document.getElementById('s-amount').textContent='Rs '+amount.toLocaleString('en-IN');
+document.getElementById('s-pending').textContent=pending;
+document.getElementById('s-verified').textContent=verified;
+document.getElementById('s-today').textContent=today;
+document.getElementById('s-trees').textContent=trees;
+}
+
+function renderTable(){
+const body=document.getElementById('t-body');
+const empty=document.getElementById('empty');
+document.getElementById('t-count').textContent=allData.length+' records';
+
+if(allData.length===0){
+body.innerHTML='';
+empty.style.display='block';
+return;
+}
+empty.style.display='none';
+
+body.innerHTML=allData.map(d=>{
+const trees=Math.max(1,Math.floor((d.amount||0)/10));
+const date=new Date(d.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const statusClass=d.status==='pending'?'pending':d.status==='verified'?'verified':d.status==='rejected'?'rejected':'qr';
+const statusText=d.status==='pending'?'Pending':d.status==='verified'?'Verified':d.status==='rejected'?'Rejected':'QR Gen';
+
+return `<tr>
+<td>#${d.id.toString().padStart(5,'0')}</td>
+<td><strong>${d.name||'-'}</strong></td>
+<td>${d.email||'-'}</td>
+<td><strong>Rs ${d.amount||0}</strong></td>
+<td>${trees} 🌳</td>
+<td>${date}</td>
+<td><span class="status ${statusClass}">${statusText}</span></td>
+<td class="actions">
+<button class="view" onclick="viewDonation(${d.id})">View</button>
+${d.status==='pending'?`<button class="verify" onclick="verify(${d.id})">Verify</button><button class="reject" onclick="reject(${d.id})">Reject</button>`:''}
+<button class="del" onclick="delDonation(${d.id})">Delete</button>
+</td>
+</tr>`;
+}).join('');
+}
+
+// View modal
+function viewDonation(id){
+const d=allData.find(x=>x.id===id);
+if(!d)return;
+const trees=Math.max(1,Math.floor((d.amount||0)/10));
+const date=new Date(d.created_at).toLocaleString('en-IN');
+
+document.getElementById('modalBody').innerHTML=`
+${d.screenshot_url?`<img src="${d.screenshot_url}" alt="Screenshot">`:'<p style="text-align:center;padding:20px;color:#64748b">No screenshot uploaded</p>'}
+<div class="info">
+<div class="row"><span class="l">ID</span><span class="v">#${d.id.toString().padStart(5,'0')}</span></div>
+<div class="row"><span class="l">Name</span><span class="v">${d.name||'-'}</span></div>
+<div class="row"><span class="l">Email</span><span class="v">${d.email||'-'}</span></div>
+<div class="row"><span class="l">Amount</span><span class="v">Rs ${d.amount||0}</span></div>
+<div class="row"><span class="l">Trees</span><span class="v">${trees} 🌳</span></div>
+<div class="row"><span class="l">Message</span><span class="v">${d.message||'-'}</span></div>
+<div class="row"><span class="l">Status</span><span class="v">${d.status}</span></div>
+<div class="row"><span class="l">Date</span><span class="v">${date}</span></div>
+</div>
+`;
+
+const foot=document.getElementById('modalFoot');
+if(d.status==='pending'){
+foot.innerHTML=`
+<button class="close" onclick="closeModal()">Close</button>
+<button class="reject" onclick="reject(${d.id});closeModal()">Reject</button>
+<button class="verify" onclick="verify(${d.id});closeModal()">Verify</button>
+`;
+}else{
+foot.innerHTML=`<button class="close" onclick="closeModal()">Close</button>`;
+}
+
+document.getElementById('modal').classList.add('active');
+}
+
+function closeModal(){document.getElementById('modal').classList.remove('active')}
+
+// Actions
+async function verify(id){
+if(!confirm('Verify this donation?'))return;
+const{error}=await sb.from('donations').update({status:'verified'}).eq('id',id);
+if(error){alert('Error: '+error.message);return}
+alert('Verified!');
+loadData();
+}
+
+async function reject(id){
+if(!confirm('Reject this donation?'))return;
+const{error}=await sb.from('donations').update({status:'rejected'}).eq('id',id);
+if(error){alert('Error: '+error.message);return}
+alert('Rejected!');
+loadData();
+}
+
+async function delDonation(id){
+if(!confirm('Delete this donation permanently?'))return;
+const{error}=await sb.from('donations').delete().eq('id',id);
+if(error){alert('Error: '+error.message);return}
+alert('Deleted!');
+loadData();
+}
+
+// Close modal on outside click
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+</script>
+</body>
+</html>
