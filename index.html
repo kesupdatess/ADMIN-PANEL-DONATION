@@ -7,101 +7,346 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:#f8fafc;color:#0f172a;min-height:100vh}
-.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.04);flex-wrap:wrap;gap:10px}
-.topbar h1{font-size:20px;font-weight:800;background:linear-gradient(135deg,#059669,#2563eb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.topbar .actions{display:flex;align-items:center;gap:10px}
-.refresh-btn{padding:10px 16px;background:#f1f5f9;color:#0f172a;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;display:flex;align-items:center;gap:6px}
-.refresh-btn:hover{background:#e2e8f0;transform:translateY(-1px)}
-.refresh-btn.spinning svg{animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.container{padding:24px;max-width:1400px;margin:0 auto}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
-.stat{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.04);border:1px solid #e2e8f0;transition:.2s}
-.stat:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
-.stat .label{font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-.stat .val{font-size:28px;font-weight:800;color:#0f172a}
-.stat .sub{font-size:11px;color:#64748b;margin-top:4px}
-.stat.green .val{color:#059669}
-.stat.blue .val{color:#2563eb}
-.stat.orange .val{color:#ea580c}
-.stat.purple .val{color:#7c3aed}
-.stat.red .val{color:#dc2626}
-.stat.cyan .val{color:#0891b2}
-.filters{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.04);border:1px solid #e2e8f0}
-.filters h3{font-size:14px;font-weight:700;margin-bottom:12px}
-.filter-row{display:flex;gap:10px;flex-wrap:wrap}
-.filter-row select,.filter-row input{padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:inherit;background:#fff;transition:.2s}
-.filter-row select:focus,.filter-row input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
-.filter-row button{padding:10px 20px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;box-shadow:0 2px 8px rgba(37,99,235,.2)}
-.filter-row button:hover{box-shadow:0 4px 12px rgba(37,99,235,.3);transform:translateY(-1px)}
-.table-wrap{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);border:1px solid #e2e8f0}
-.table-head{padding:20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-.table-head h3{font-size:16px;font-weight:700}
-.table-head .count{font-size:12px;color:#64748b;font-weight:600;background:#f1f5f9;padding:4px 12px;border-radius:20px}
-.table-scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:900px}
-thead{background:#f8fafc}
-th{padding:14px 16px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0}
-td{padding:14px 16px;font-size:13px;border-bottom:1px solid #f1f5f9}
-tr:hover{background:#f8fafc}
-.status{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.status.pending{background:#fef3c7;color:#92400e}
-.status.verified{background:#d1fae5;color:#065f46}
-.status.rejected{background:#fee2e2;color:#991b1b}
-.status.qr{background:#dbeafe;color:#1e40af}
-.actions{display:flex;gap:6px;flex-wrap:wrap}
-.actions button{padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
-.actions button:hover{background:#f8fafc;transform:translateY(-1px)}
-.actions .verify{color:#059669;border-color:#a7f3d0}
-.actions .verify:hover{background:#ecfdf5}
-.actions .reject{color:#dc2626;border-color:#fecaca}
-.actions .reject:hover{background:#fef2f2}
-.actions .view{color:#2563eb;border-color:#bfdbfe}
-.actions .view:hover{background:#eff6ff}
-.actions .cert{color:#7c3aed;border-color:#ddd6fe}
-.actions .cert:hover{background:#f5f3ff}
-.actions .receipt{color:#ea580c;border-color:#fed7aa}
-.actions .receipt:hover{background:#fff7ed}
-.actions .del{color:#64748b}
-.actions .del:hover{background:#fef2f2;color:#dc2626}
-.empty{text-align:center;padding:60px 20px;color:#64748b}
-.empty .icon{font-size:48px;margin-bottom:12px;opacity:.5}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
-.modal.active{display:flex}
-.modal-box{background:#fff;border-radius:20px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:modalIn .3s ease}
-@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-.modal-head{padding:20px 24px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center}
-.modal-head h3{font-size:18px;font-weight:700}
-.modal-head .close{width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;cursor:pointer;font-size:18px;transition:.2s}
-.modal-head .close:hover{background:#e2e8f0;transform:rotate(90deg)}
-.modal-body{padding:24px}
-.modal-body img{width:100%;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
-.modal-body .info{background:#f8fafc;border-radius:12px;padding:16px}
-.modal-body .info .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px}
-.modal-body .info .row:last-child{border-bottom:none}
-.modal-body .info .row .l{color:#64748b;font-weight:500}
-.modal-body .info .row .v{font-weight:700}
-.modal-foot{padding:16px 24px;border-top:1px solid #e2e8f0;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
-.modal-foot button{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:.2s}
-.modal-foot button:hover{transform:translateY(-1px)}
-.modal-foot .verify{background:#059669;color:#fff;box-shadow:0 2px 8px rgba(5,150,105,.3)}
-.modal-foot .reject{background:#dc2626;color:#fff;box-shadow:0 2px 8px rgba(220,38,38,.3)}
-.modal-foot .close{background:#f1f5f9;color:#0f172a}
-.toast{position:fixed;top:20px;right:20px;background:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 10px 15px rgba(0,0,0,.1);border:1px solid #e2e8f0;display:none;font-size:13px;font-weight:600;z-index:200}
-.toast.success{border-left:4px solid #059669}
-.toast.error{border-left:4px solid #dc2626}
-@media(max-width:640px){
-.container{padding:16px}
-.topbar{padding:12px 16px;flex-wrap:wrap;gap:10px}
-.topbar h1{font-size:18px}
-.stat .val{font-size:22px}
-.filter-row{flex-direction:column}
-.filter-row select,.filter-row input,.filter-row button{width:100%}
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0f172a; min-height: 100vh; }
+
+.topbar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+.topbar h1 { font-size: 20px; font-weight: 800; color: #059669; }
+.refresh-btn { padding: 8px 16px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+.container { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+.stat .label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
+.stat .val { font-size: 28px; font-weight: 800; color: #0f172a; }
+.stat.green .val { color: #059669; }
+.stat.blue .val { color: #2563eb; }
+.stat.orange .val { color: #ea580c; }
+.stat.purple .val { color: #7c3aed; }
+
+.filters { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+.filters h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+.filter-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.filter-row select, .filter-row input { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: inherit; }
+.filter-row button { padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+.table-wrap { background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+.table-head { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+.table-head h3 { font-size: 16px; font-weight: 700; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 900px; }
+thead { background: #f8fafc; }
+th { padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+tr:hover { background: #f8fafc; }
+
+.status { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.status.pending { background: #fef3c7; color: #92400e; }
+.status.verified { background: #d1fae5; color: #065f46; }
+.status.rejected { background: #fee2e2; color: #991b1b; }
+.status.qr { background: #dbeafe; color: #1e40af; }
+
+.actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.actions button { padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; font-size: 11px; font-weight: 600; cursor: pointer; }
+.actions .view { color: #2563eb; border-color: #bfdbfe; }
+.actions .verify { color: #059669; border-color: #a7f3d0; }
+.actions .reject { color: #dc2626; border-color: #fecaca; }
+.actions .del { color: #64748b; }
+
+.empty { text-align: center; padding: 60px 20px; color: #64748b; }
+
+/* Modal */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.modal.active { display: flex; }
+.modal-box { background: #fff; border-radius: 16px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal-head { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+.modal-head h3 { font-size: 18px; font-weight: 700; }
+.modal-head .close { width: 32px; height: 32px; border-radius: 50%; border: none; background: #f1f5f9; cursor: pointer; font-size: 18px; }
+.modal-body { padding: 24px; }
+.modal-body img { width: 100%; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px; }
+.modal-body .info { background: #f8fafc; border-radius: 12px; padding: 16px; }
+.modal-body .info .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+.modal-body .info .row:last-child { border-bottom: none; }
+.modal-body .info .row .l { color: #64748b; }
+.modal-body .info .row .v { font-weight: 700; }
+.modal-foot { padding: 16px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; justify-content: flex-end; }
+.modal-foot button { padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
+.modal-foot .verify { background: #059669; color: #fff; }
+.modal-foot .reject { background: #dc2626; color: #fff; }
+.modal-foot .close { background: #f1f5f9; color: #0f172a; }
 </style>
 </head>
+<body>
+
+<div class="topbar">
+    <h1>KES Updates - Admin</h1>
+    <button class="refresh-btn" onclick="loadData()">Refresh Data</button>
+</div>
+
+<div class="container">
+    <div class="stats">
+        <div class="stat blue"><div class="label">Total Donations</div><div class="val" id="s-total">0</div></div>
+        <div class="stat green"><div class="label">Total Amount</div><div class="val" id="s-amount">Rs 0</div></div>
+        <div class="stat orange"><div class="label">Pending</div><div class="val" id="s-pending">0</div></div>
+        <div class="stat purple"><div class="label">Verified</div><div class="val" id="s-verified">0</div></div>
+        <div class="stat"><div class="label">Trees Planted</div><div class="val" id="s-trees">0</div></div>
+    </div>
+
+    <div class="filters">
+        <h3>Filter Donations</h3>
+        <div class="filter-row">
+            <select id="f-status">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="verified">Verified</option>
+                <option value="rejected">Rejected</option>
+                <option value="qr_generated">QR Generated</option>
+            </select>
+            <input type="text" id="f-search" placeholder="Search name or email...">
+            <button onclick="loadData()">Apply Filter</button>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <div class="table-head">
+            <h3>All Donations</h3>
+            <div id="t-count">0 records</div>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Amount</th>
+                        <th>Trees</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="t-body"></tbody>
+            </table>
+        </div>
+        <div class="empty" id="empty" style="display:none;">No donations found</div>
+    </div>
+</div>
+
+<div class="modal" id="modal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>Donation Details</h3>
+            <button class="close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-foot" id="modalFoot"></div>
+    </div>
+</div>
+
+<script>
+// Supabase Config
+var SUPABASE_URL = 'https://uegdizdnminwhkxcdcle.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlZ2RpemRubWlud2hreGNkY2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwODk2MjgsImV4cCI6MjA5NzY2NTYyOH0.2wiAHbaoNoDva_tRseDAywVMu_6AioCGlVLgoVb0d6s';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+var allData = [];
+
+// Load Data Function
+function loadData() {
+    var status = document.getElementById('f-status').value;
+    var search = document.getElementById('f-search').value.toLowerCase();
+    
+    var query = sb.from('donations').select('*').order('created_at', { ascending: false });
+    if (status) {
+        query = query.eq('status', status);
+    }
+    
+    query.then(function(result) {
+        if (result.error) {
+            console.error(result.error);
+            return;
+        }
+        
+        var data = result.data;
+        
+        // Filter by search
+        allData = data.filter(function(d) {
+            if (!search) return true;
+            var name = (d.name || '').toLowerCase();
+            var email = (d.email || '').toLowerCase();
+            return name.includes(search) || email.includes(search);
+        });
+        
+        renderStats();
+        renderTable();
+    });
+}
+
+// Render Stats
+function renderStats() {
+    var total = allData.length;
+    var amount = 0;
+    var pending = 0;
+    var verified = 0;
+    var trees = 0;
+    
+    for (var i = 0; i < allData.length; i++) {
+        var d = allData[i];
+        var amt = d.amount || 0;
+        amount += amt;
+        if (d.status === 'pending') pending++;
+        if (d.status === 'verified') verified++;
+        trees += Math.max(1, Math.floor(amt / 10));
+    }
+    
+    document.getElementById('s-total').textContent = total;
+    document.getElementById('s-amount').textContent = 'Rs ' + amount.toLocaleString('en-IN');
+    document.getElementById('s-pending').textContent = pending;
+    document.getElementById('s-verified').textContent = verified;
+    document.getElementById('s-trees').textContent = trees;
+}
+
+// Render Table
+function renderTable() {
+    var body = document.getElementById('t-body');
+    var empty = document.getElementById('empty');
+    document.getElementById('t-count').textContent = allData.length + ' records';
+    
+    if (allData.length === 0) {
+        body.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+    }
+    
+    empty.style.display = 'none';
+    var html = '';
+    
+    for (var i = 0; i < allData.length; i++) {
+        var d = allData[i];
+        var trees = Math.max(1, Math.floor((d.amount || 0) / 10));
+        var date = new Date(d.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        
+        var statusClass = 'qr';
+        var statusText = 'QR Gen';
+        if (d.status === 'pending') { statusClass = 'pending'; statusText = 'Pending'; }
+        else if (d.status === 'verified') { statusClass = 'verified'; statusText = 'Verified'; }
+        else if (d.status === 'rejected') { statusClass = 'rejected'; statusText = 'Rejected'; }
+        
+        var id = d.id;
+        var idStr = id.toString().padStart(5, '0');
+        var name = d.name || '-';
+        var email = d.email || '-';
+        var amount = d.amount || 0;
+        
+        var actionsHtml = '<button class="view" onclick="viewDonation(' + id + ')">View</button>';
+        if (d.status === 'pending') {
+            actionsHtml += '<button class="verify" onclick="verifyDonation(' + id + ')">Verify</button>';
+            actionsHtml += '<button class="reject" onclick="rejectDonation(' + id + ')">Reject</button>';
+        }
+        actionsHtml += '<button class="del" onclick="deleteDonation(' + id + ')">Delete</button>';
+        
+        html += '<tr>';
+        html += '<td>#' + idStr + '</td>';
+        html += '<td><strong>' + name + '</strong></td>';
+        html += '<td>' + email + '</td>';
+        html += '<td><strong>Rs ' + amount + '</strong></td>';
+        html += '<td>' + trees + ' 🌳</td>';
+        html += '<td>' + date + '</td>';
+        html += '<td><span class="status ' + statusClass + '">' + statusText + '</span></td>';
+        html += '<td class="actions">' + actionsHtml + '</td>';
+        html += '</tr>';
+    }
+    
+    body.innerHTML = html;
+}
+
+// View Modal
+function viewDonation(id) {
+    var d = null;
+    for (var i = 0; i < allData.length; i++) {
+        if (allData[i].id === id) { d = allData[i]; break; }
+    }
+    if (!d) return;
+    
+    var trees = Math.max(1, Math.floor((d.amount || 0) / 10));
+    var date = new Date(d.created_at).toLocaleString('en-IN');
+    var idStr = d.id.toString().padStart(5, '0');
+    
+    var bodyHtml = '';
+    if (d.screenshot_url) {
+        bodyHtml += '<img src="' + d.screenshot_url + '" alt="Screenshot">';
+    } else {
+        bodyHtml += '<p style="text-align:center;padding:20px;color:#64748b">No screenshot uploaded</p>';
+    }
+    
+    bodyHtml += '<div class="info">';
+    bodyHtml += '<div class="row"><span class="l">ID</span><span class="v">#' + idStr + '</span></div>';
+    bodyHtml += '<div class="row"><span class="l">Name</span><span class="v">' + (d.name || '-') + '</span></div>';
+    bodyHtml += '<div class="row"><span class="l">Email</span><span class="v">' + (d.email || '-') + '</span></div>';
+    bodyHtml += '<div class="row"><span class="l">Amount</span><span class="v">Rs ' + (d.amount || 0) + '</span></div>';
+    bodyHtml += '<div class="row"><span class="l">Trees</span><span class="v">' + trees + ' 🌳</span></div>';
+    bodyHtml += '<div class="row"><span class="l">Message</span><span class="v">' + (d.message || '-') + '</span></div>';
+    bodyHtml += '<div class="row"><span class="l">Status</span><span class="v">' + d.status + '</span></div>';
+    bodyHtml += '<div class="row"><span class="l">Date</span><span class="v">' + date + '</span></div>';
+    bodyHtml += '</div>';
+    
+    document.getElementById('modalBody').innerHTML = bodyHtml;
+    
+    var footHtml = '<button class="close" onclick="closeModal()">Close</button>';
+    if (d.status === 'pending') {
+        footHtml = '<button class="close" onclick="closeModal()">Close</button>';
+        footHtml += '<button class="reject" onclick="rejectDonation(' + d.id + ');closeModal()">Reject</button>';
+        footHtml += '<button class="verify" onclick="verifyDonation(' + d.id + ');closeModal()">Verify</button>';
+    }
+    document.getElementById('modalFoot').innerHTML = footHtml;
+    
+    document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+// Actions
+function verifyDonation(id) {
+    if (!confirm('Verify this donation?')) return;
+    sb.from('donations').update({ status: 'verified' }).eq('id', id).then(function(result) {
+        if (result.error) { alert('Error: ' + result.error.message); return; }
+        alert('Verified!');
+        loadData();
+    });
+}
+
+function rejectDonation(id) {
+    if (!confirm('Reject this donation?')) return;
+    sb.from('donations').update({ status: 'rejected' }).eq('id', id).then(function(result) {
+        if (result.error) { alert('Error: ' + result.error.message); return; }
+        alert('Rejected!');
+        loadData();
+    });
+}
+
+function deleteDonation(id) {
+    if (!confirm('Delete this donation permanently?')) return;
+    sb.from('donations').delete().eq('id', id).then(function(result) {
+        if (result.error) { alert('Error: ' + result.error.message); return; }
+        alert('Deleted!');
+        loadData();
+    });
+}
+
+// Close modal on outside click
+document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target.id === 'modal') closeModal();
+});
+
+// Load data on page load
+loadData();
+</script>
+</body>
+</html></head>
 <body>
 <div class="toast" id="toast"></div>
 
